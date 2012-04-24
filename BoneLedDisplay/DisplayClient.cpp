@@ -47,20 +47,28 @@ void DisplayClient::appClientReceiveMulticast(int servicePort, SYNTRO_EHEAD *mul
 	// make sure this is for us
 	if (servicePort != m_receivePort) {
 		logWarn(QString("Multicast received to invalid port %1").arg(servicePort));
+		free(multiCast);
+		return;
 	}
-	else {
-		// unpack the record, first get a pointer to the SYNTRO_RECORD_HEADER
-		SYNTRO_RECORD_HEADER *head = (SYNTRO_RECORD_HEADER *)(multiCast + 1);
 
-		// the led data is immediately after the SYNTRO_RECORD_HEADER in a single quint32
-		quint32 *values = (quint32 *)(head + 1);
-
-		// the BoneLedDisplay class catches this signal
-		emit newData(*values);
-
-		// ack the data
-		clientSendMulticastAck(servicePort);
+	// and the size we expect
+	if (len != (sizeof(SYNTRO_RECORD_HEADER) + sizeof(quint32))) {
+		logWarn(QString("Multicast length is unexpected : %1").arg(len - sizeof(SYNTRO_RECORD_HEADER)));
+		free(multiCast);
+		return;
 	}
+
+	// unpack the record, first get a pointer to the SYNTRO_RECORD_HEADER
+	SYNTRO_RECORD_HEADER *head = (SYNTRO_RECORD_HEADER *)(multiCast + 1);
+
+	// the led data is immediately after the SYNTRO_RECORD_HEADER in a single quint32
+	quint32 *values = (quint32 *)(head + 1);
+
+	// the BoneLedDisplay class catches this signal
+	emit newData(*values);
+
+	// ack the data
+	clientSendMulticastAck(servicePort);
 
 	// always free the record you are given
 	free(multiCast);
