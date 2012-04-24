@@ -1,5 +1,5 @@
 BoneLedReader/Makefile
-BoneLedDisplay/Makefile
+BoneLedDisplay/Makefile*
 Debug/
 Release/
 Output/
