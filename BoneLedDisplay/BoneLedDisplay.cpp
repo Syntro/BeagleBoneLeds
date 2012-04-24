@@ -70,13 +70,14 @@ void BoneLedDisplay::closeEvent(QCloseEvent *)
 	if (m_client) {
 		disconnect(m_client, SIGNAL(newData(quint32)), this, SLOT(newData(quint32)));
 		m_client->exitThread();
+		delete m_client;
 	}
 
 	saveWindowState();
 }
 
 // The ledWrite function provided by the DisplayClient allows for multiple writes
-// in one call, but we only do one led at a time here.
+// in one call, but we only do one led (one bit) at a time here.
 void BoneLedDisplay::toggle(int led)
 {
 	if (led < 0 || led >= NUM_LEDS)
