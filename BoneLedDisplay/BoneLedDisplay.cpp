@@ -79,12 +79,10 @@ void BoneLedDisplay::closeEvent(QCloseEvent *)
 // in one call, but we only do one led at a time here.
 void BoneLedDisplay::toggle(int led)
 {
-	QString current;
-
 	if (led < 0 || led >= NUM_LEDS)
 		return;
 
-	current = m_ledState[led]->text();
+	QString current = m_ledState[led]->text();
 
 	quint32 mask = 0x01 << led;
 	quint32 newVal = (current == "ON") ? 0 : 1;
