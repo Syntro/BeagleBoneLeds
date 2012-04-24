@@ -1,23 +1,40 @@
 TEMPLATE = app
 
 TARGET = BoneLedDisplay
- 
-DESTDIR = Output 
+
+win32* {
+    DESTDIR = Release
+}
+else {
+    DESTDIR = Output
+}
 
 QT += core gui network
 
-CONFIG += release link_pkgconfig
+CONFIG += release
 
-# for now don't bundle Syntro apps
-macx:CONFIG -= app_bundle
+# No debug in release builds
+unix:QMAKE_CXXFLAGS_RELEASE -= -g
 
-PKGCONFIG += syntro
+unix {
+	CONFIG += link_pkgconfig
+	macx:CONFIG -= app_bundle
+	PKGCONFIG += syntro
+}
 
 DEFINES += QT_NETWORK_LIB
 
 INCLUDEPATH += GeneratedFiles
 
-DEPENDPATH +=
+win32-g++:LIBS += -L"$(SYNTRODIR)/bin"
+
+win32-msvc*:LIBS += -L"$(SYNTRODIR)/lib"
+
+win32 {
+        DEFINES += _CRT_SECURE_NO_WARNINGS
+        INCLUDEPATH += $(SYNTRODIR)/include
+        LIBS += -lSyntroLib -lSyntroGUI
+}
 
 MOC_DIR += GeneratedFiles/release
 
