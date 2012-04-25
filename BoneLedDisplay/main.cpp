@@ -44,11 +44,15 @@ QSettings *loadSettings(QStringList arglist)
 	QSettings *settings = loadStandardSettings("BoneLedDisplay", arglist);
 
 	// add some default streams
-	if (!settings->contains(BONELED_MULTICAST_SERVICE))
-		settings->setValue(BONELED_MULTICAST_SERVICE, "BoneLed");
+	int count = settings->beginReadArray(DEMBONES);
+	
+	if (count == 0) {
+		settings->setArrayIndex(0);
+		settings->setValue(BONELED_MULTICAST_SERVICE, "BoneLed-0");
+		settings->setValue(BONELED_E2E_SERVICE, "BoneLedControl-0");
+	}
 
-	if (!settings->contains(BONELED_E2E_SERVICE))
-		settings->setValue(BONELED_E2E_SERVICE, "BoneLedControl");
+	settings->endArray();
 
 	return settings;
 }

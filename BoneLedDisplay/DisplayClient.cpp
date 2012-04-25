@@ -25,27 +25,50 @@
 DisplayClient::DisplayClient(QObject *parent, QSettings *settings)
 	: Endpoint(parent, settings, DISPLAYCLIENT_BACKGROUND_INTERVAL)
 {
-	m_receivePort = -1;
-	m_controlPort = -1;
 }
 
 void DisplayClient::appClientInit()
 {
-	m_receiveStream = m_settings->value(BONELED_MULTICAST_SERVICE).toString();
+	int port;
 
-	if (m_receiveStream.length() > 0)
-		m_receivePort = clientAddService(m_receiveStream, SERVICETYPE_MULTICAST, false, true);
+	int count = m_settings->beginReadArray(DEMBONES);
 
-	m_controlStream = m_settings->value(BONELED_E2E_SERVICE).toString();
+	for (int i = 0; i < count; i++) {
+		m_settings->setArrayIndex(i);
 
-	if (m_controlStream.length() > 0)
-		m_controlPort = clientAddService(m_controlStream, SERVICETYPE_E2E, false, true);
+		QString receiveStream = m_settings->value(BONELED_MULTICAST_SERVICE).toString();
+
+		port = clientAddService(receiveStream, SERVICETYPE_MULTICAST, false, true);
+
+		if (port < 0)
+			logWarn(QString("Error adding multicast service for %1").arg(receiveStream));
+		else
+			m_receivePort.append(port);
+
+		QString controlStream = m_settings->value(BONELED_E2E_SERVICE).toString();
+
+		port = clientAddService(controlStream, SERVICETYPE_E2E, false, true);
+
+		if (port < 0)
+			logWarn(QString("Error adding E2E service for %1").arg(controlStream));
+		else
+			m_controlPort.append(port);
+	}
+
+	m_settings->endArray();	
 }
 
 void DisplayClient::appClientReceiveMulticast(int servicePort, SYNTRO_EHEAD *multiCast, int len)
 {
+	int bone;
+
 	// make sure this is for us
-	if (servicePort != m_receivePort) {
+	for (bone = 0; bone < m_receivePort.count(); bone++) {
+		if (servicePort == m_receivePort.at(bone))
+			break;
+	}
+
+	if (bone == m_receivePort.count()) {
 		logWarn(QString("Multicast received to invalid port %1").arg(servicePort));
 		free(multiCast);
 		return;
@@ -65,7 +88,7 @@ void DisplayClient::appClientReceiveMulticast(int servicePort, SYNTRO_EHEAD *mul
 	quint32 *values = (quint32 *)(head + 1);
 
 	// the BoneLedDisplay class catches this signal
-	emit newData(*values);
+	emit newData(bone, *values);
 
 	// ack the data
 	clientSendMulticastAck(servicePort);
@@ -74,22 +97,25 @@ void DisplayClient::appClientReceiveMulticast(int servicePort, SYNTRO_EHEAD *mul
 	free(multiCast);
 }
 
-void DisplayClient::ledWrite(quint32 mask, quint32 values)
+void DisplayClient::ledWrite(int bone, quint32 mask, quint32 values)
 {
+	if (bone < 0 || bone > m_controlPort.count())
+		return;
+
 	if (!clientIsConnected())
 		return;
 
-	if (!clientIsServiceActive(m_controlPort))
+	if (!clientIsServiceActive(m_controlPort[bone]))
 		return;
 
 	int length = 2 * sizeof(quint32);
 
-	SYNTRO_EHEAD *head = clientBuildMessage(m_controlPort, length);
+	SYNTRO_EHEAD *head = clientBuildMessage(m_controlPort.at(bone), length);
 
 	quint32 *p = (quint32 *)(head + 1);
 
 	p[0] = mask;
 	p[1] = values;
 
-	clientSendMessage(m_controlPort, head, length, SYNTROLINK_MEDPRI);
+	clientSendMessage(m_controlPort.at(bone), head, length, SYNTROLINK_MEDPRI);
 }

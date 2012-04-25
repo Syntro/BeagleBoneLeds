@@ -29,6 +29,7 @@
 #include "DisplayClient.h"
 #include "ui_BoneLedDisplay.h"
 
+#define NUM_BONES 3
 #define NUM_LEDS 4
 
 class BoneLedDisplay : public QMainWindow
@@ -40,7 +41,7 @@ public:
 	~BoneLedDisplay();
 
 public slots:
-	void newData(quint32 values);
+	void newData(int bone, quint32 values);
 	void toggle(int led);
 
 protected:
@@ -48,8 +49,8 @@ protected:
 	void timerEvent(QTimerEvent *);
 
 private:
-	void updateDisplay(quint32 current);
-	void updateLabel(QLabel *label, bool on);
+	void updateDisplay(int bone, quint32 current);
+	void updateButton(int bone, int button);
 	void initStatusBar();
 	void mapButtonEvents();
 	void layoutWindow();
@@ -62,20 +63,20 @@ private:
 	DisplayClient *m_client;
 
 	QMutex m_updateMutex;
-	bool m_haveNewVal;
-	quint32 m_newVal;
-	quint32 m_oldVal;
+	bool m_haveNewVal[NUM_BONES];
+	quint32 m_newVal[NUM_BONES];
+	quint32 m_oldVal[NUM_BONES];
 
 	int m_updateTimer;
-	qint64 m_lastUpdate;
-	bool m_idle;
-	bool m_wasIdle;
-	int m_statusTimer;
-	//QLabel *m_controlStatus;
+	int m_timeoutTimer;
+
+	qint64 m_lastUpdate[NUM_BONES];
+	bool m_idle[NUM_BONES];
+	bool m_wasIdle[NUM_BONES];
 
 	QSignalMapper *m_signalMapper;
-	QLabel *m_ledState[NUM_LEDS];
-	QPushButton *m_toggle[NUM_LEDS];
+	bool m_ledState[NUM_BONES * NUM_LEDS];
+	QPushButton *m_toggle[NUM_BONES * NUM_LEDS];
 };
 
 #endif // BONELEDDISPLAY_H

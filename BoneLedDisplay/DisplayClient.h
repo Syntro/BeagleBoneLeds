@@ -20,8 +20,11 @@
 #ifndef DISPLAYCLIENT_H
 #define DISPLAYCLIENT_H
 
+#include <qlist.h>
+
 #include "SyntroLib.h"
 
+#define DEMBONES "demBones"
 #define BONELED_MULTICAST_SERVICE "ledMulticastService"
 #define BONELED_E2E_SERVICE "ledE2EService"
 
@@ -33,21 +36,18 @@ class DisplayClient : public Endpoint
 public:
 	DisplayClient(QObject *parent, QSettings *settings);
 
-	void ledWrite(quint32 mask, quint32 values);
+	void ledWrite(int bone, quint32 mask, quint32 values);
 
 signals:
-	void newData(quint32 values);
+	void newData(int bone, quint32 values);
 
 protected:
 	void appClientInit();
 	void appClientReceiveMulticast(int servicePort, SYNTRO_EHEAD *multiCast, int len);
 
 private:
-	QString m_receiveStream;
-	int m_receivePort;
-
-	QString m_controlStream;
-	int m_controlPort;
+	QList<int> m_receivePort;
+	QList<int> m_controlPort;
 };
 
 #endif // DISPLAYCLIENT_H
