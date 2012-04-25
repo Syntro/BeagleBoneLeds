@@ -29,7 +29,7 @@ BoneLedDisplay::BoneLedDisplay(QSettings *settings, QWidget *parent, Qt::WFlags 
 {
 	ui.setupUi(this);
 	connect(ui.actionExit, SIGNAL(triggered()), this, SLOT(close()));
-	initStatusBar();
+	//initStatusBar();
 	layoutWindow();
 	mapButtonEvents();
 
@@ -49,6 +49,8 @@ BoneLedDisplay::BoneLedDisplay(QSettings *settings, QWidget *parent, Qt::WFlags 
 
 	m_updateTimer = startTimer(100);
 	m_statusTimer = startTimer(LED_STATUS_TIMEOUT);
+
+	setWindowFlags(Qt::CustomizeWindowHint);
 }
 
 BoneLedDisplay::~BoneLedDisplay()
@@ -107,7 +109,7 @@ void BoneLedDisplay::newData(quint32 values)
 void BoneLedDisplay::timerEvent(QTimerEvent *event)
 {
 	if (event->timerId() == m_statusTimer) {
-		m_controlStatus->setText(m_client->getLinkState());
+		//m_controlStatus->setText(m_client->getLinkState());
 
 		if (syntroTimerExpired(SyntroClock(), m_lastUpdate, LED_STATUS_TIMEOUT)) {
 			m_idle = true;
@@ -186,8 +188,8 @@ void BoneLedDisplay::layoutWindow()
 
 	QGridLayout *gridLayout = new QGridLayout(ui.centralWidget);
 
-	gridLayout->setSpacing(6);
-	gridLayout->setContentsMargins(11, 11, 11, 11);
+	gridLayout->setSpacing(4);
+	gridLayout->setContentsMargins(5, 5, 5, 5);
 
 	for (int i = 0; i < NUM_LEDS; i++) {
 		label = new QLabel(QString("USR%1").arg(i));
@@ -198,7 +200,9 @@ void BoneLedDisplay::layoutWindow()
 		m_ledState[i]->setFrameShadow(QFrame::Sunken);
 		m_ledState[i]->setAlignment(Qt::AlignCenter);
 		m_toggle[i] = new QPushButton("Toggle");
-		hSpacer	= new QSpacerItem(148, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+		m_toggle[i]->setMinimumWidth(50);
+		m_toggle[i]->setMaximumWidth(80);
+		hSpacer	= new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
 		gridLayout->addWidget(label, i, 0, 1, 1);
 		gridLayout->addWidget(m_ledState[i], i, 1, 1, 1);
@@ -209,9 +213,9 @@ void BoneLedDisplay::layoutWindow()
 
 void BoneLedDisplay::initStatusBar()
 {
-	m_controlStatus = new QLabel(this);
-	m_controlStatus->setAlignment(Qt::AlignLeft);
-	ui.statusBar->addWidget(m_controlStatus, 1);
+	//m_controlStatus = new QLabel(this);
+	//m_controlStatus->setAlignment(Qt::AlignLeft);
+	//ui.statusBar->addWidget(m_controlStatus, 1);
 }
 
 void BoneLedDisplay::saveWindowState()

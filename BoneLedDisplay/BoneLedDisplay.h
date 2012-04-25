@@ -71,7 +71,7 @@ private:
 	bool m_idle;
 	bool m_wasIdle;
 	int m_statusTimer;
-	QLabel *m_controlStatus;
+	//QLabel *m_controlStatus;
 
 	QSignalMapper *m_signalMapper;
 	QLabel *m_ledState[NUM_LEDS];
