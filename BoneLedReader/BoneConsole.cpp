@@ -21,12 +21,14 @@
 
 #include "BoneConsole.h"
 
+#define LEDS_ZERO_AND_THREE 0x09
+#define LEDS_ONE_AND_TWO 0x06
 
 BoneConsole::BoneConsole(QSettings *settings, QObject *parent)
 	: QThread(parent)
 {
 	m_readCount = 0;
-	m_toggle = 0x09;
+	m_toggle = LEDS_ZERO_AND_THREE;
 
 	connect((QCoreApplication *)parent, SIGNAL(aboutToQuit()), this, SLOT(aboutToQuit()));
 
@@ -134,10 +136,10 @@ void BoneConsole::run()
 				break;
 
 			case 'T':
-				if (m_toggle == 0x09)
-					m_toggle = 0x06;
+				if (m_toggle == LEDS_ZERO_AND_THREE)
+					m_toggle = LEDS_ONE_AND_TWO;
 				else
-					m_toggle = 0x09;
+					m_toggle = LEDS_ZERO_AND_THREE;
 
 				emit ledWrite(0x0f, m_toggle);
 				break;	
