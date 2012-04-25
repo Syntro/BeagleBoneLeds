@@ -18,7 +18,6 @@
 //
 
 #include <QtGui/QApplication>
-#include <QtDebug>
 #include <QSettings>
 #include <sys/types.h>
 #include <unistd.h>
