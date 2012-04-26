@@ -198,7 +198,7 @@ void BoneLedDisplay::layoutWindow()
 		for (int i = 0; i < NUM_LEDS; i++) {
 			m_toggle[k] = new QPushButton(QString("%1").arg(i));
 			m_toggle[k]->setMinimumWidth(30);
-			m_toggle[k]->setMaximumWidth(30);
+			m_toggle[k]->setMaximumWidth(50);
 			gridLayout->addWidget(m_toggle[k], j, i + 1, 1, 1);
 			k++;
 		}
