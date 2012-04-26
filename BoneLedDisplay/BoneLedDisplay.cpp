@@ -81,18 +81,15 @@ void BoneLedDisplay::closeEvent(QCloseEvent *)
 
 // The ledWrite function provided by the DisplayClient allows for multiple writes
 // in one call, but we only do one led (one bit) at a time here.
-void BoneLedDisplay::toggle(int led)
+void BoneLedDisplay::toggle(int button)
 {
-	if (led < 0 || led >= NUM_BONES * NUM_LEDS)
+	if (button < 0 || button >= NUM_BONES * NUM_LEDS)
 		return;
 
-	int bone = led / NUM_LEDS;
+	int bone = button / NUM_LEDS;
+	int led = button % NUM_LEDS;
 
-	quint32 mask = 0x01 << led;
-	quint32 newVal = m_ledState[led] ? 0 : 1;
-	newVal <<= led;
-
-	m_client->ledWrite(bone, mask, newVal);
+	m_client->ledWrite(bone, 0x01 << led, ~m_oldVal[bone]);
 }
 
 // No GUI work here, we are on the client endpoint thread
@@ -100,35 +97,53 @@ void BoneLedDisplay::newData(int bone, quint32 values)
 {
 	QMutexLocker lock(&m_updateMutex);
 
-	m_idle[bone] = false;
-	m_lastUpdate[bone] = SyntroClock();
+	if (bone >= 0 && bone < NUM_BONES) {
+		m_idle[bone] = false;
+		m_lastUpdate[bone] = SyntroClock();
 
-	m_haveNewVal[bone] = true;
-	m_newVal[bone] = values;
+		m_haveNewVal[bone] = true;
+		m_newVal[bone] = values;
+	}
 }
 
 void BoneLedDisplay::timerEvent(QTimerEvent *event)
 {
 	if (event->timerId() == m_timeoutTimer) {
-		if (syntroTimerExpired(SyntroClock(), m_lastUpdate[0], LED_STATUS_TIMEOUT)) {
-			m_idle[0] = true;
-			updateDisplay(0, 0);
+		for (int i = 0; i < NUM_BONES; i++) {
+			if (syntroTimerExpired(SyntroClock(), m_lastUpdate[i], LED_STATUS_TIMEOUT)) {
+				m_idle[i] = true;
+				updateDisplay(i, 0);
+			}
 		}
 	}
 	else {
-		bool isNew = false;
-		unsigned int current;
+		checkForUpdates();
+	}
+}
 
-		m_updateMutex.lock();
-		if (m_haveNewVal[0]) {
-			current = m_newVal[0];
-			isNew = true;
-			m_haveNewVal[0] = false;
+void BoneLedDisplay::checkForUpdates()
+{
+	bool isNew[NUM_BONES];
+	quint32 current[NUM_BONES];
+
+	m_updateMutex.lock();
+
+	for (int i = 0; i < NUM_BONES; i++) {
+		if (m_haveNewVal[i]) {
+			current[i] = m_newVal[i];
+			isNew[i] = true;
+			m_haveNewVal[i] = false;
 		}
-		m_updateMutex.unlock();
+		else {
+			isNew[i] = false;
+		}
+	}
+	
+	m_updateMutex.unlock();
 
-		if (isNew)
-			updateDisplay(0, current);
+	for (int i = 0; i < NUM_BONES; i++) {
+		if (isNew[i])
+			updateDisplay(i, current[i]);
 	}
 }
 
@@ -140,23 +155,18 @@ void BoneLedDisplay::updateDisplay(int bone, quint32 current)
 	quint32 mask = 0x01;
 
 	for (int i = 0, button = bone * NUM_LEDS; i < NUM_LEDS; i++, button++) {
-		m_ledState[button] = (current & mask) == mask;
-		updateButton(bone, button);
+		if (m_idle[bone])
+			m_toggle[button]->setStyleSheet(QString::fromUtf8("background-color: rgb(255, 255, 0);"));
+		else if ((current & mask) == mask)
+			m_toggle[button]->setStyleSheet(QString::fromUtf8("background-color: rgb(0, 255, 0);"));
+		else
+			m_toggle[button]->setStyleSheet(QString::fromUtf8("background-color: rgb(255, 0, 0);"));
+
 		mask <<= 1;
 	}
 
 	m_oldVal[bone] = current;
-	m_wasIdle[bone] = m_idle;
-}
-
-void BoneLedDisplay::updateButton(int bone, int button)
-{
-	if (m_idle[bone])
-		m_toggle[button]->setStyleSheet(QString::fromUtf8("background-color: rgb(255, 255, 0);"));
-	else if (m_ledState[button])
-		m_toggle[button]->setStyleSheet(QString::fromUtf8("background-color: rgb(0, 255, 0);"));
-	else
-		m_toggle[button]->setStyleSheet(QString::fromUtf8("background-color: rgb(255, 0, 0);"));
+	m_wasIdle[bone] = m_idle[bone];
 }
 
 void BoneLedDisplay::mapButtonEvents()
@@ -177,17 +187,17 @@ void BoneLedDisplay::layoutWindow()
 
 	QGridLayout *gridLayout = new QGridLayout(ui.centralWidget);
 
-	gridLayout->setSpacing(4);
-	gridLayout->setContentsMargins(5, 5, 5, 5);
+	gridLayout->setSpacing(6);
+	gridLayout->setContentsMargins(11, 11, 11, 11);
 
 	for (int j = 0, k = 0; j < NUM_BONES; j++) {
-		label = new QLabel(QString("Bone %1").arg(j));
+		label = new QLabel(QString("Bone-%1").arg(j));
 		gridLayout->addWidget(label, j, 0, 1, 1);
 		
 		for (int i = 0; i < NUM_LEDS; i++) {
 			m_toggle[k] = new QPushButton(QString("%1").arg(i));
-			m_toggle[k]->setMinimumWidth(24);
-			m_toggle[k]->setMaximumWidth(24);
+			m_toggle[k]->setMinimumWidth(30);
+			m_toggle[k]->setMaximumWidth(30);
 			gridLayout->addWidget(m_toggle[k], j, i + 1, 1, 1);
 			k++;
 		}

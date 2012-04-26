@@ -49,8 +49,8 @@ protected:
 	void timerEvent(QTimerEvent *);
 
 private:
+	void checkForUpdates();
 	void updateDisplay(int bone, quint32 current);
-	void updateButton(int bone, int button);
 	void initStatusBar();
 	void mapButtonEvents();
 	void layoutWindow();
@@ -62,20 +62,18 @@ private:
 	QSettings *m_settings;
 	DisplayClient *m_client;
 
-	QMutex m_updateMutex;
-	bool m_haveNewVal[NUM_BONES];
-	quint32 m_newVal[NUM_BONES];
-	quint32 m_oldVal[NUM_BONES];
-
-	int m_updateTimer;
 	int m_timeoutTimer;
+	int m_updateTimer;
+	QMutex m_updateMutex;
 
 	qint64 m_lastUpdate[NUM_BONES];
 	bool m_idle[NUM_BONES];
 	bool m_wasIdle[NUM_BONES];
+	bool m_haveNewVal[NUM_BONES];
+	quint32 m_newVal[NUM_BONES];
+	quint32 m_oldVal[NUM_BONES];
 
 	QSignalMapper *m_signalMapper;
-	bool m_ledState[NUM_BONES * NUM_LEDS];
 	QPushButton *m_toggle[NUM_BONES * NUM_LEDS];
 };
 
