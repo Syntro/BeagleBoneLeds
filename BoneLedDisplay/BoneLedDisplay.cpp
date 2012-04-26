@@ -51,7 +51,8 @@ BoneLedDisplay::BoneLedDisplay(QSettings *settings, QWidget *parent, Qt::WFlags 
 	m_updateTimer = startTimer(100);
 	m_timeoutTimer = startTimer(LED_STATUS_TIMEOUT);
 
-	//setWindowFlags(Qt::CustomizeWindowHint);
+	if (m_settings->value(FULLSCREEN_MODE, false).toBool())
+		setWindowFlags(Qt::CustomizeWindowHint);
 }
 
 BoneLedDisplay::~BoneLedDisplay()

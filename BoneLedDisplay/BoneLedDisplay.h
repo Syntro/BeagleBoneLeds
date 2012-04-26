@@ -29,6 +29,8 @@
 #include "DisplayClient.h"
 #include "ui_BoneLedDisplay.h"
 
+#define FULLSCREEN_MODE "fullScreenMode"
+
 #define NUM_BONES 3
 #define NUM_LEDS 4
 

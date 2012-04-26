@@ -36,6 +36,9 @@ int main(int argc, char *argv[])
 
 	w->show();
 
+	if (settings->value(FULLSCREEN_MODE, false).toBool())
+		w->showFullScreen();
+
 	return a.exec();
 }
 
@@ -53,6 +56,9 @@ QSettings *loadSettings(QStringList arglist)
 	}
 
 	settings->endArray();
+
+	if (!settings->contains(FULLSCREEN_MODE))
+		settings->setValue(FULLSCREEN_MODE, false);
 
 	return settings;
 }
